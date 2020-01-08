@@ -1,13 +1,13 @@
 <template>
-    <div style="position: relative; width: 300px;">
+    <v-layout align-space-around justify-start column>
         <message-form :messages="messages" :messageAttr="message"/>
-        <message-row v-for="message in messages"
+        <message-row v-for="message in sortedMessages"
                      :message="message"
                      :messages="messages"
                      :key="message.id"
                      :deleteMessage="deleteMessage"
                      :editMessage="editMessage"/>
-    </div>
+    </v-layout>
 </template>
 
 <script>
@@ -18,6 +18,11 @@
         components: {
             MessageRow,
             MessageForm
+        },
+        computed: {
+            sortedMessages(){
+                return this.messages.sort((a, b) => -(a.id - b.id))
+            }
         },
         data() {
             return {

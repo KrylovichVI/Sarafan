@@ -1,12 +1,26 @@
 <template>
-    <div>
-        <input type="text" placeholder="Write something" v-model="text"/>
-        <input type="button" value="Save" @click="save"/>
-    </div>
+    <v-layout>
+        <v-text-field
+                label="New message"
+                placeholder="Write something"
+                v-model="text"/>
+        <v-btn @click="save">
+            Save
+        </v-btn>
+    </v-layout>
 </template>
 
 <script>
     import { sendMessage } from '../../util/ws'
+
+    function getIndex(list, id) {
+        for(var i = 0; i < list.length; i++){
+            if(list[i].id === id){
+                return i
+            }
+        }
+        return -1
+    }
 
     export default {
         props: ['messages', 'messageAttr'],
