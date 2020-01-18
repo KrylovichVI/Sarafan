@@ -1,19 +1,26 @@
 package com.KrylovichVI.Sarafan.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table
 @Data
 @EqualsAndHashCode(of = {"id"})
 @ToString(of = {"id", "text"})
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id"
+)
 public class Message {
 
     @Id
@@ -27,6 +34,15 @@ public class Message {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonView(value = Views.FullMessage.class)
     private LocalDateTime creationDate;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonView(value = Views.FullMessage.class)
+    private User author;
+
+    @OneToMany(mappedBy = "message", orphanRemoval = true)
+    @JsonView(value = Views.FullMessage.class)
+    private List<Comment> comments;
 
     @JsonView(value = Views.FullMessage.class)
     private String link;

@@ -2,6 +2,7 @@ package com.KrylovichVI.Sarafan.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonView;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -15,12 +16,16 @@ import java.time.LocalDateTime;
 @Data
 public class User implements Serializable{
     @Id
+    @JsonView(value = Views.IdName.class)
     private String id;
+    @JsonView(value = Views.IdName.class)
     private String name;
+    @JsonView(value = Views.IdName.class)
     private String userpic;
     private String email;
     private String gender;
     private String locale;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastVisit;
+
 }

@@ -3,7 +3,9 @@
         <v-text-field
                 label="New message"
                 placeholder="Write something"
-                v-model="text"/>
+                v-model="text"
+                @keyup.enter="save"
+        />
         <v-btn @click="save">
             Save
         </v-btn>
@@ -28,7 +30,7 @@
             }
         },
         methods:{
-            ...mapActions(['addMethodAction', 'updateMethodAction']),
+            ...mapActions(['addMessageAction', 'updateMessageAction']),
             save() {
                 const message = {
                     id: this.id,
@@ -36,9 +38,9 @@
                 }
 
                 if(this.id){
-                    this.updateMethodAction(message)
+                    this.updateMessageAction(message)
                 } else {
-                    this.addMethodAction(message)
+                    this.addMessageAction(message)
                 }
 
                 this.text = ''
