@@ -18,8 +18,8 @@ import java.util.List;
 @EqualsAndHashCode(of = {"id"})
 @ToString(of = {"id", "text"})
 @JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id"
+        property = "id",
+        generator = ObjectIdGenerators.PropertyGenerator.class
 )
 public class Message {
 

@@ -3,50 +3,36 @@ package com.KrylovichVI.Sarafan.controller;
 import com.KrylovichVI.Sarafan.domain.Message;
 import com.KrylovichVI.Sarafan.domain.User;
 import com.KrylovichVI.Sarafan.domain.Views;
-import com.KrylovichVI.Sarafan.dto.EventType;
-import com.KrylovichVI.Sarafan.dto.MetaDto;
-import com.KrylovichVI.Sarafan.dto.ObjectType;
-import com.KrylovichVI.Sarafan.repo.MessageRepo;
-import com.KrylovichVI.Sarafan.util.WsSender;
+import com.KrylovichVI.Sarafan.dto.MessagePageDto;
+import com.KrylovichVI.Sarafan.service.MessageService;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.apache.logging.log4j.util.BiConsumer;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("message")
 public class MessageController {
-    private static String URL_PATTERN = "https?:\\/\\/?[\\w\\d\\._\\-%\\/\\?=&#]+";
-    private static String IMAGE_PATTERN = "\\.(jpeg|jpg|gif|png)$";
+    public static final int MESSAGES_PER_PAGE = 3;
 
-    private static Pattern URL_REGEX = Pattern.compile(URL_PATTERN, Pattern.CASE_INSENSITIVE);
-    private static Pattern IMG_REGEX = Pattern.compile(IMAGE_PATTERN, Pattern.CASE_INSENSITIVE);
-
-    private final MessageRepo messageRepo;
-    private final BiConsumer<EventType, Message> wsSender;
+    private final MessageService messageService;
 
     @Autowired
-    public MessageController(MessageRepo messageRepo, WsSender wsSender) {
-        this.messageRepo = messageRepo;
-        this.wsSender = wsSender.getSender(ObjectType.MESSAGE, Views.IdName.class);
+    public MessageController(MessageService messageService) {
+        this.messageService = messageService;
     }
 
     @GetMapping
-    @JsonView(Views.IdName.class)
-    public List<Message> list() {
-        return messageRepo.findAll();
+    @JsonView(Views.FullMessage.class)
+    public MessagePageDto list(
+            @PageableDefault(size = MESSAGES_PER_PAGE, sort = { "id" }, direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return messageService.findAll(pageable);
     }
 
     @GetMapping("{id}")
@@ -60,14 +46,7 @@ public class MessageController {
             @RequestBody Message message,
             @AuthenticationPrincipal User user
     ) throws IOException {
-        message.setCreationDate(LocalDateTime.now());
-        fillMeta(message);
-        message.setAuthor(user);
-        Message updatedMessage = messageRepo.save(message);
-
-        wsSender.accept(EventType.CREATE, updatedMessage);
-
-        return updatedMessage;
+        return messageService.create(message, user);
     }
 
     @PutMapping("{id}")
@@ -75,61 +54,13 @@ public class MessageController {
             @PathVariable("id") Message messageFromDb,
             @RequestBody Message message
     ) throws IOException {
-        BeanUtils.copyProperties(message, messageFromDb, "id");
-        fillMeta(messageFromDb);
-        Message updatedMessage = messageRepo.save(messageFromDb);
-
-        wsSender.accept(EventType.UPDATE, updatedMessage);
-
-        return updatedMessage;
+        return messageService.update(messageFromDb, message);
     }
 
     @DeleteMapping("{id}")
     public void delete(@PathVariable("id") Message message) {
-        messageRepo.delete(message);
-        wsSender.accept(EventType.REMOVE, message);
+       messageService.delete(message);
     }
 
-    private void fillMeta(Message message) throws IOException {
-        String text = message.getText();
-        Matcher matcher = URL_REGEX.matcher(text);
-
-        if(matcher.find()){
-            String url = text.substring(matcher.start(), matcher.end());
-
-            matcher = IMG_REGEX.matcher(url);
-
-            message.setLink(url);
-
-            if(matcher.find()){
-                message.setLinkCover(url);
-            } else if(!url.contains("youtu")){
-                MetaDto meta = getMeta(url);
-
-                message.setLinkCover(meta.getCover());
-                message.setLinkTitle(meta.getTitle());
-                message.setLinkDescription(meta.getDescription());
-            }
-        }
-
-    }
-
-    private MetaDto getMeta(String url) throws IOException {
-        Document doc = Jsoup.connect(url).get();
-
-        Elements title = doc.select("meta[name$=title], meta[property$=title]");
-        Elements description = doc.select("meta[name$=description], meta[property$=description]");
-        Elements cover = doc.select("meta[name$=image], meta[property$=image]");
-
-        return new MetaDto(
-                getContent(title.first()),
-                getContent(description.first()),
-                getContent(cover.first())
-        );
-    }
-
-    private String getContent(Element element) {
-        return element == null ? "" : element.attr("content");
-    }
 
 }
