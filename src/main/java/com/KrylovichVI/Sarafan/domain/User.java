@@ -1,7 +1,8 @@
 package com.KrylovichVI.Sarafan.domain;
 
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonView;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -34,25 +35,19 @@ public class User implements Serializable{
     @JsonView(value = Views.FullProfile.class)
     private LocalDateTime lastVisit;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_subscriptions",
-            joinColumns = @JoinColumn(name = "subscriber_id"),
-            inverseJoinColumns = @JoinColumn(name = "channel_id")
-    )
     @JsonView(value = Views.FullProfile.class)
-    @JsonIdentityReference
-    @JsonIdentityInfo(property = "id", generator = ObjectIdGenerators.PropertyGenerator.class)
-    private Set<User> subscriptions = new HashSet<>();
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_subscriptions",
-            joinColumns = @JoinColumn(name = "channel_id"),
-            inverseJoinColumns = @JoinColumn(name = "subscriber_id")
+    @OneToMany(
+            mappedBy = "subscriber",
+            orphanRemoval = true
     )
+    private Set<UserSubscription> subscriptions = new HashSet<>();
+
     @JsonView(value = Views.FullProfile.class)
-    @JsonIdentityReference
-    @JsonIdentityInfo(property = "id", generator = ObjectIdGenerators.PropertyGenerator.class)
-    private Set<User> subscribers = new HashSet<>();
+    @OneToMany(
+            mappedBy = "channel",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL
+    )
+    private Set<UserSubscription> subscribers = new HashSet<>();
 
 }
