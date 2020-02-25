@@ -14,8 +14,18 @@
                             <v-flex>{{profile.gender}}</v-flex>
                             <v-flex>{{profile.lastVisit}}</v-flex>
                             <v-flex>{{profile.subscriptions && profile.subscriptions.length}} subscriptions</v-flex>
-                            <v-flex>{{profile.subscribers && profile.subscribers.length}} subscribers</v-flex>
-                        </v-layout>
+                            <router-link
+                            v-if="isMyProfile"
+                            :to="`/subscriptions/${profile.id}`"
+                            >
+                                {{profile.subscribers && profile.subscribers.length}} subscribers
+                            </router-link>
+                            <v-flex
+                                    v-else
+                            >
+                                {{profile.subscribers && profile.subscribers.length}} subscribers
+                            </v-flex>
+                </v-layout>
                     </v-flex>
                 </v-layout>
                 <v-btn
